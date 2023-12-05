@@ -3,6 +3,7 @@ import socket
 import queue  # 用于创建FIFO队列
 import numpy as np
 import time
+import pandas as pd
 
 
 # 定义一个FIFO队列，用于存储UDP数据包
@@ -66,45 +67,59 @@ def receive_udp_data(host, port):
 
 def store_data(activity_id=-1, user_id=-1, save_to_file=False, max_runtime_seconds= 9999):
     
-    filename = f"dataset/{activity_id}_{user_id}_data.npy"
+    filename = f"dataset/{activity_id}_{user_id}_data.csv"
     start_time = time.time()
     data_list = []
-    with open(filename, 'w') as file:
-        while True:
-            try:
-                current_time = time.time()
-                elapsed_time = current_time - start_time
+    
+    while True:
+        try:
+            current_time = time.time()
+            elapsed_time = current_time - start_time
 
-                if max_runtime_seconds is not None and elapsed_time > max_runtime_seconds:
-                    # 如果运行时间超过规定时间，退出循环
-                    print(f"\nMax runtime of {max_runtime_seconds} seconds reached.")
-                    time_up = True
-                    break
-                data = fifo_queue.get(timeout=5)  # 从FIFO队列获取数据
-                time_str = get_time(data)
-                ax = float((get_databyte(data, DATA_AXH) << 8) | get_databyte(data, DATA_AXL))/32768*16*9.8
-                ay = float((get_databyte(data, DATA_AYH) << 8) | get_databyte(data, DATA_AYL))/32768*16*9.8
-                az = float((get_databyte(data, DATA_AZH) << 8) | get_databyte(data, DATA_AZL))/32768*16*9.8
-                gx = float((get_databyte(data, DATA_GXH) << 8) | get_databyte(data, DATA_GXL))/32768*2000
-                gy = float((get_databyte(data, DATA_GXH) << 8) | get_databyte(data, DATA_GYL))/32768*2000
-                gz = float((get_databyte(data, DATA_GXH) << 8) | get_databyte(data, DATA_GZL))/32768*2000
-                hx = float((get_databyte(data, DATA_HXH) << 8) | get_databyte(data, DATA_HXL))*100/1024
-                hy = float((get_databyte(data, DATA_HYH) << 8) | get_databyte(data, DATA_HYL))*100/1024
-                hz = float((get_databyte(data, DATA_HZH) << 8) | get_databyte(data, DATA_HZL))*100/1024
+            if max_runtime_seconds is not None and elapsed_time > max_runtime_seconds:
+                # 如果运行时间超过规定时间，退出循环
+                print(f"\nMax runtime of {max_runtime_seconds} seconds reached.")
+                time_up = True
+                break
+            data = fifo_queue.get(timeout=5)  # 从FIFO队列获取数据
+            time_str = get_time(data)
+            ax = float((get_databyte(data, DATA_AXH) << 8) | get_databyte(data, DATA_AXL))/32768*16*9.8
+            ay = float((get_databyte(data, DATA_AYH) << 8) | get_databyte(data, DATA_AYL))/32768*16*9.8
+            az = float((get_databyte(data, DATA_AZH) << 8) | get_databyte(data, DATA_AZL))/32768*16*9.8
+            gx = float((get_databyte(data, DATA_GXH) << 8) | get_databyte(data, DATA_GXL))/32768*2000
+            gy = float((get_databyte(data, DATA_GXH) << 8) | get_databyte(data, DATA_GYL))/32768*2000
+            gz = float((get_databyte(data, DATA_GXH) << 8) | get_databyte(data, DATA_GZL))/32768*2000
+            hx = float((get_databyte(data, DATA_HXH) << 8) | get_databyte(data, DATA_HXL))*100/1024
+            hy = float((get_databyte(data, DATA_HYH) << 8) | get_databyte(data, DATA_HYL))*100/1024
+            hz = float((get_databyte(data, DATA_HZH) << 8) | get_databyte(data, DATA_HZL))*100/1024
 
-                # 输出到终端
-                print(f"{time_str}||{round(ax, 2)}:{round(ay, 2)}:{round(az, 2)}||{round(gx, 2)}:{round(gy, 2)}:{round(gz, 2)}||{round(hx, 2)}:{round(hy, 2)}:{round(hz, 2)}             \r", end="", flush=True)
-                data_array = np.array([ax, ay, az, gx, gy, gz, hx, hy, hz])
-                data_list.append(data_array)
-                # 写入文件
-                # file.write(f"{time_str}||{round(ax, 2)}:{round(ay, 2)}:{round(az, 2)}||{round(gx, 2)}:{round(gy, 2)}:{round(gz, 2)}||{round(hx, 2)}:{round(hy, 2)}:{round(hz, 2)}\n")
-            except queue.Empty:
-                pass  # 如果队列为空，继续等待新数据
-        if save_to_file:
-            print(f"{len(data_list)} packages")
-            np.save(filename, np.array(data_list))
-            print("Dataset saved")
-        return
+            # 输出到终端
+            print(f"{time_str}||{round(ax, 2)}:{round(ay, 2)}:{round(az, 2)}||{round(gx, 2)}:{round(gy, 2)}:{round(gz, 2)}||{round(hx, 2)}:{round(hy, 2)}:{round(hz, 2)}             \r", end="", flush=True)
+            data_dict = {
+            # "Time": [time_str],
+            "Label": [activity_id],
+            "AX": [round(ax, 2)],
+            "AY": [round(ay, 2)],
+            "AZ": [round(az, 2)],
+            "GX": [round(gx, 2)],
+            "GY": [round(gy, 2)],
+            "GZ": [round(gz, 2)],
+            "HX": [round(hx, 2)],
+            "HY": [round(hy, 2)],
+            "HZ": [round(hz, 2)]
+            }
+            data_df = pd.DataFrame(data_dict)
+            data_list.append(data_df)
+        except queue.Empty:
+            pass  # 如果队列为空，继续等待新数据
+        
+    if save_to_file:
+        print(f"{len(data_list)} packages")
+        result_df = pd.concat(data_list, ignore_index=True)
+        # 追加到文件，不写入列名
+        result_df.to_csv(filename, mode='a', header=False, index=False)
+        print("Dataset saved")
+    return
 
 if __name__ == "__main__":
     # 配置UDP监听主机和端口
