@@ -87,8 +87,8 @@ def store_data(activity_id=-1, user_id=-1, save_to_file=False, max_runtime_secon
             ay = float((get_databyte(data, DATA_AYH) << 8) | get_databyte(data, DATA_AYL))/32768*16*9.8
             az = float((get_databyte(data, DATA_AZH) << 8) | get_databyte(data, DATA_AZL))/32768*16*9.8
             gx = float((get_databyte(data, DATA_GXH) << 8) | get_databyte(data, DATA_GXL))/32768*2000
-            gy = float((get_databyte(data, DATA_GXH) << 8) | get_databyte(data, DATA_GYL))/32768*2000
-            gz = float((get_databyte(data, DATA_GXH) << 8) | get_databyte(data, DATA_GZL))/32768*2000
+            gy = float((get_databyte(data, DATA_GYH) << 8) | get_databyte(data, DATA_GYL))/32768*2000
+            gz = float((get_databyte(data, DATA_GZH) << 8) | get_databyte(data, DATA_GZL))/32768*2000
             hx = float((get_databyte(data, DATA_HXH) << 8) | get_databyte(data, DATA_HXL))*100/1024
             hy = float((get_databyte(data, DATA_HYH) << 8) | get_databyte(data, DATA_HYL))*100/1024
             hz = float((get_databyte(data, DATA_HZH) << 8) | get_databyte(data, DATA_HZL))*100/1024
