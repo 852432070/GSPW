@@ -63,6 +63,16 @@ def receive_udp_data(host, port):
                 return
             data, addr = s.recvfrom(1024) 
             fifo_queue.put(data, timeout=5)  # 将数据包放入FIFO队列
+
+def convert_signed(data, high_byte, low_byte):
+    # 获取16位数
+    value = (get_databyte(data, high_byte) << 8) | get_databyte(data, low_byte)
+    
+    # 转换为有符号数
+    if value & 0x8000:  # 检查最高位是否为1
+        value = value - 0x10000  # 如果最高位为1，转为有符号数
+    
+    return float(value)
             
 
 def store_data(activity_id=-1, user_id=-1, save_to_file=False, max_runtime_seconds= 9999):
@@ -83,15 +93,25 @@ def store_data(activity_id=-1, user_id=-1, save_to_file=False, max_runtime_secon
                 break
             data = fifo_queue.get(timeout=5)  # 从FIFO队列获取数据
             time_str = get_time(data)
-            ax = float((get_databyte(data, DATA_AXH) << 8) | get_databyte(data, DATA_AXL))/32768*16*9.8
-            ay = float((get_databyte(data, DATA_AYH) << 8) | get_databyte(data, DATA_AYL))/32768*16*9.8
-            az = float((get_databyte(data, DATA_AZH) << 8) | get_databyte(data, DATA_AZL))/32768*16*9.8
-            gx = float((get_databyte(data, DATA_GXH) << 8) | get_databyte(data, DATA_GXL))/32768*2000
-            gy = float((get_databyte(data, DATA_GYH) << 8) | get_databyte(data, DATA_GYL))/32768*2000
-            gz = float((get_databyte(data, DATA_GZH) << 8) | get_databyte(data, DATA_GZL))/32768*2000
-            hx = float((get_databyte(data, DATA_HXH) << 8) | get_databyte(data, DATA_HXL))*100/1024
-            hy = float((get_databyte(data, DATA_HYH) << 8) | get_databyte(data, DATA_HYL))*100/1024
-            hz = float((get_databyte(data, DATA_HZH) << 8) | get_databyte(data, DATA_HZL))*100/1024
+            # ax = float((get_databyte(data, DATA_AXH) << 8) | get_databyte(data, DATA_AXL))/32768*16*9.8
+            # ay = float((get_databyte(data, DATA_AYH) << 8) | get_databyte(data, DATA_AYL))/32768*16*9.8
+            # az = float((get_databyte(data, DATA_AZH) << 8) | get_databyte(data, DATA_AZL))/32768*16*9.8
+            # gx = float((get_databyte(data, DATA_GXH) << 8) | get_databyte(data, DATA_GXL))/32768*2000
+            # gy = float((get_databyte(data, DATA_GYH) << 8) | get_databyte(data, DATA_GYL))/32768*2000
+            # gz = float((get_databyte(data, DATA_GZH) << 8) | get_databyte(data, DATA_GZL))/32768*2000
+            # hx = float((get_databyte(data, DATA_HXH) << 8) | get_databyte(data, DATA_HXL))*100/1024
+            # hy = float((get_databyte(data, DATA_HYH) << 8) | get_databyte(data, DATA_HYL))*100/1024
+            # hz = float((get_databyte(data, DATA_HZH) << 8) | get_databyte(data, DATA_HZL))*100/1024
+
+            ax = convert_signed(data, DATA_AXH, DATA_AXL)
+            ay = convert_signed(data, DATA_AYH, DATA_AYL)
+            az = convert_signed(data, DATA_AZH, DATA_AZL)
+            gx = convert_signed(data, DATA_GXH, DATA_GXL)
+            gy = convert_signed(data, DATA_GYH, DATA_GYL)
+            gz = convert_signed(data, DATA_GZH, DATA_GZL)
+            hx = convert_signed(data, DATA_HXH, DATA_HXL)
+            hy = convert_signed(data, DATA_HYH, DATA_HYL)
+            hz = convert_signed(data, DATA_HZH, DATA_HZL)
 
             # 输出到终端
             print(f"{time_str}||{round(ax, 2)}:{round(ay, 2)}:{round(az, 2)}||{round(gx, 2)}:{round(gy, 2)}:{round(gz, 2)}||{round(hx, 2)}:{round(hy, 2)}:{round(hz, 2)}             \r", end="", flush=True)
