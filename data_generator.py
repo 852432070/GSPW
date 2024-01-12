@@ -72,7 +72,7 @@ def convert_signed(data, high_byte, low_byte):
     if value & 0x8000:  # 检查最高位是否为1
         value = value - 0x10000  # 如果最高位为1，转为有符号数
     
-    return float(value)
+    return value
             
 
 def store_data(activity_id=-1, user_id=-1, save_to_file=False, max_runtime_seconds= 9999):
