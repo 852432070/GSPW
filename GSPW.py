@@ -10,8 +10,10 @@ def print_logo():
     print("========General Sensing Platform on Wrist========")
 
 import argparse
-import data_generator
+from data_generator import PRINT_TERMINAL, PRINT_GUI, SAVE_FILE, SEND_TENSOR, DataGenerator
 import threading
+import classifier
+from classifier import Classifier
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mode", metavar="M", type=int, help='choose a mode', required=True)
@@ -25,20 +27,42 @@ if __name__ == "__main__":
     print_logo()
     host = "0.0.0.0"  
     port = 8524  
+    generator = DataGenerator()
+    generator.host = host
+    generator.port = port
+
+    
     if args.mode == 0:  #模式0：建立udp连接，并将接收到的数据实时显示在终端
+        generator.flag = PRINT_TERMINAL
         # 创建线程并启动UDP数据包接收
-        udp_thread = threading.Thread(target=data_generator.receive_udp_data, args=(host, port))
+        udp_thread = threading.Thread(target=generator.receive_udp_data)
         udp_thread.start()
 
-        logging_thread = threading.Thread(target=data_generator.store_data)
+        logging_thread = threading.Thread(target=generator.store_data)
         logging_thread.start()
     elif args.mode == 1:   #模式1：建立udp链接，并将接收到的数据存入指定文件
         if args.activity_id >= 0 and args.user_id >= 0:
-            udp_thread = threading.Thread(target=data_generator.receive_udp_data, args=(host, port))
+            generator.flag = PRINT_TERMINAL | SAVE_FILE
+            generator.activity_id = args.activity_id
+            generator.user_id = args.user_id
+            generator.max_runtime_seconds = args.duration
+            udp_thread = threading.Thread(target=generator.receive_udp_data)
             udp_thread.start()
 
-            logging_thread = threading.Thread(target=data_generator.store_data, args=(args.activity_id, args.user_id, True, args.duration))
+            logging_thread = threading.Thread(target=generator.store_data)
             logging_thread.start()
         else:
             print("Please provide both activity_id and user_id.")
+    elif args.mode == 2:    #模式2，建立udp连接，对接收到的数据进行预处理、再进行推理，最终得到预测结果
+        generator.flag = PRINT_TERMINAL|SEND_TENSOR
+        cf = Classifier("/home/shichang/imuServer/model/model.onnx")
+
+        udp_thread = threading.Thread(target=generator.receive_udp_data)
+        udp_thread.start()
+        logging_thread = threading.Thread(target=generator.store_data)
+        logging_thread.start()
+        classify_thread = threading.Thread(target=classifier.classification_thread, args=(cf,))
+        classify_thread.start()
+
+
 
