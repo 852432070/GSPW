@@ -11,6 +11,7 @@ from PyQt5.QtCore import pyqtSignal, QObject
 from data_widget import DataApp
 class Communicate(QObject):
     signal_send_list = pyqtSignal(list)
+    signal_log_end = pyqtSignal()
 commu = Communicate()
 
 
@@ -125,6 +126,8 @@ class DataGenerator:
                             print("Dataset saved")
                             data_list.clear()
                             self.max_runtime_seconds = None
+                            if self.flag & PRINT_GUI:
+                                commu.signal_log_end.emit()
                         # self.time_up = True
                         # break
                     data = fifo_queue.get(timeout=5)  # 从FIFO队列获取数据

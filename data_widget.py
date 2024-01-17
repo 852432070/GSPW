@@ -1,6 +1,8 @@
 import sys
 import random
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton
+from PyQt5.QtGui import QIntValidator
+
 
 
 class DataApp(QWidget):
@@ -28,6 +30,10 @@ class DataApp(QWidget):
         self.user_input = QLineEdit()
         self.activity_input = QLineEdit()
         self.duration_input = QLineEdit()
+        positive_int_validator = QIntValidator(1, 999999)
+        self.user_input.setValidator(positive_int_validator)
+        self.activity_input.setValidator(positive_int_validator)
+        self.duration_input.setValidator(positive_int_validator)
         self.confirm_button = QPushButton('确认')
         input_layout.addWidget(QLabel('用户:'))
         input_layout.addWidget(self.user_input)
