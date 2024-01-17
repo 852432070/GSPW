@@ -9,10 +9,7 @@ import threading
 
 from PyQt5.QtCore import pyqtSignal, QObject
 from data_widget import DataApp
-class Communicate(QObject):
-    signal_send_list = pyqtSignal(list)
-    signal_log_end = pyqtSignal()
-commu = Communicate()
+
 
 
 # 定义一个FIFO队列，用于存储UDP数据包
@@ -79,8 +76,11 @@ def convert_signed(data, high_byte, low_byte):
     
     return value
 
-class DataGenerator:
+class DataGenerator(QObject):
+    signal_send_list = pyqtSignal(list)
+    signal_log_end = pyqtSignal()
     def __init__(self, activity_id=-1, user_id=-1, flag=PRINT_TERMINAL, max_runtime_seconds=None, host="0.0.0.0" , port=8524, window_size=171):
+        super().__init__()
         self.activity_id = activity_id
         self.user_id = user_id
         self.flag = flag
@@ -127,7 +127,7 @@ class DataGenerator:
                             data_list.clear()
                             self.max_runtime_seconds = None
                             if self.flag & PRINT_GUI:
-                                commu.signal_log_end.emit()
+                                self.signal_log_end.emit()
                         # self.time_up = True
                         # break
                     data = fifo_queue.get(timeout=5)  # 从FIFO队列获取数据
@@ -149,7 +149,7 @@ class DataGenerator:
                         print(f"{time_str}||{sample_data[0]}:{sample_data[1]}:{sample_data[2]}||{sample_data[3]}:{sample_data[4]}:{sample_data[5]}||{sample_data[6]}:{sample_data[7]}:{sample_data[8]}             \r", end="", flush=True)
                     
                     if self.flag & PRINT_GUI:
-                        commu.signal_send_list.emit(sample_data)
+                        self.signal_send_list.emit(sample_data)
                         
                     if self.flag & SAVE_FILE: # 保存到文件
                         data_dict = {

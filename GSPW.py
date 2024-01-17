@@ -55,7 +55,7 @@ if __name__ == "__main__":
             print("Please provide both activity_id and user_id.")
     elif args.mode == 2:    #模式2，建立udp连接，对接收到的数据进行预处理、再进行推理，最终得到预测结果
         generator.flag = PRINT_TERMINAL|SEND_TENSOR
-        cf = Classifier("/home/shichang/imuServer/model/model.onnx")
+        cf = Classifier("./model/model.onnx")
 
         udp_thread = threading.Thread(target=generator.receive_udp_data)
         udp_thread.start()
